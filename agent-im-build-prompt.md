@@ -18,21 +18,21 @@ The twist: the "buddies" are real LLM agents, and they can only do business with
 
 ### The theme constraint (READ THIS — it's heavily judged)
 - **Modern engine, retro paint job.** The backend, crypto, and AI must be genuinely modern and sophisticated (real Ed25519 signatures, real LLM agents, real gating logic). The judges want to *see* the modern power working.
-- **The 2000s constraint applies ONLY to the UI/UX.** The frontend must look and feel like an early-2000s Windows XP desktop running AIM. Full Luna blue, glossy beveled buttons, Tahoma / MS Sans Serif, gradient title bars, draggable windows, the AIM sign-on and buddy-list chrome. This is criterion #2 and it's weighted heavily — do not phone it in and do NOT use a modern/flat/minimal aesthetic.
+- **The 2000s constraint applies ONLY to the UI/UX.** The frontend must look and feel like an early-2000s **Mac OS X (Aqua) desktop running iChat** — glossy candy "gel" buttons, brushed-metal windows, left-side traffic-light controls, a magnifying Dock, a top menu bar, Lucida Grande type, and iChat's glossy chat bubbles. This is criterion #2 and it's weighted heavily — do not phone it in and do NOT use a modern/flat/minimal aesthetic. Full design brief in §4.
 - Never expose ugly modern chrome. Every visible surface is period-accurate. The sophistication shows through *what the app does*, not through modern styling.
 
 ---
 
 ## 1. THE CONCEPT IN ONE PARAGRAPH
 
-Two AI agents sign on to a Windows-XP-era instant messenger. Each has a screen name bound to a cryptographic keypair, so its identity can't be faked. When one adds the other as a buddy, the app runs a live challenge-response handshake (send random nonce → buddy signs it → verify signature against registered public key) and shows "✓ Identity Verified." Only *after* mutual verification, and only if both agents' warning levels are low enough, are the two LLM agents allowed to negotiate a deal in the chat window in real time. If an agent misbehaves, it gets "warned," its warning level rises (just like AIM), and it gets throttled or blocked. One screen — the buddy list + chat window — demonstrates identity, trust, and moderation for AI agents.
+Two AI agents sign on to an early-2000s Mac OS X instant messenger (iChat-style). Each has a screen name bound to a cryptographic keypair, so its identity can't be faked. When one adds the other as a buddy, the app runs a live challenge-response handshake (send random nonce → buddy signs it → verify signature against registered public key) and shows "✓ Identity Verified." Only *after* mutual verification, and only if both agents' warning levels are low enough, are the two LLM agents allowed to negotiate a deal in the chat window in real time. If an agent misbehaves, it gets "warned," its warning level rises (just like AIM), and it gets throttled or blocked. One screen — the buddy list + chat window — demonstrates identity, trust, and moderation for AI agents.
 
 ---
 
 ## 2. TECH STACK & CONSTRAINTS
 
 - **Backend:** Python + FastAPI. Async. WebSocket support for live chat streaming.
-- **Frontend:** React + Tailwind CSS. (Tailwind for layout speed; the XP look is achieved with custom CSS/components on top — see §4.)
+- **Frontend:** React + Tailwind CSS. (Tailwind for layout/spacing only; the Aqua gloss is achieved with custom CSS/components on top — layered gradients, sheens, brushed-metal texture — see §4. Do not let Tailwind's default flat look leak through.)
 - **Persistence:** SQLite via SQLAlchemy (zero-config, fast to stand up). No external DB required.
 - **Presence / pub-sub:** In-memory by default; make Redis optional behind an interface (`REDIS_URL` env var). Do NOT hard-require Redis — the demo must run with zero infra.
 - **Crypto:** `cryptography` library, **Ed25519** keypairs (fast, small signatures, modern).
@@ -45,12 +45,12 @@ Two AI agents sign on to a Windows-XP-era instant messenger. Each has a screen n
 ## 3. ARCHITECTURE OVERVIEW
 
 ```
-┌────────────────────────── FRONTEND (React, XP skin) ──────────────────────────┐
-│  Sign-On window · Buddy List window · IM Chat window · Verify modal ·          │
-│  Warning meter · Away-message · fake XP desktop + taskbar + sounds             │
+┌───────────────────────── FRONTEND (React, Aqua/iChat skin) ────────────────────┐
+│  Sign-In · iChat Buddy List · Chat window (gel bubbles) · Verify sheet ·        │
+│  Get Info + warning meter · fake Aqua desktop + Dock + menu bar + sounds        │
 └───────────────▲───────────────────────────────────────────────▲──────────────┘
                 │ REST + WebSocket                                │
-┌───────────────┴───────────────── BACKEND (FastAPI) ─────────────┴──────────────┐
+┌───────────────┴───────────────────────────────── BACKEND (FastAPI) ────────────┴──────────────┐
 │  Registry  →  binds screen_name ⇄ Ed25519 public key, issues signed credential │
 │  Handshake →  nonce challenge / signature verify (the "prove it" moment)       │
 │  Presence  →  online / away / idle, away messages                              │
@@ -65,29 +65,61 @@ Two AI agents sign on to a Windows-XP-era instant messenger. Each has a screen n
 
 ---
 
-## 4. AESTHETIC BIBLE (criterion #2 — do not compromise)
+## 4. AESTHETIC BIBLE — Mac OS X "Aqua" + iChat, 2003–2005 (criterion #2 — do NOT compromise)
 
-The whole app renders inside a **fake Windows XP desktop**:
-- Backdrop: a Bliss-style green-hills gradient wallpaper (generate with CSS gradients — do NOT use copyrighted Microsoft assets; make an original homage).
-- Bottom **taskbar**: green XP start-bar gradient, a "start" button (round, glossy), a clock in the tray, and buttons for open windows.
-- All app windows are **draggable**, have XP title bars (blue-gradient, white title text, minimize/maximize/close bevel buttons), and 2px beveled borders.
+> This is the most heavily judged criterion and the biggest reason a judge smiles in the first three seconds. Read this section twice. The whole app is a **fake early-2000s Mac OS X desktop** (Panther/Tiger-era **Aqua**), and the messenger inside it is modeled on **iChat AV**. Aqua is the glossiest, most "lickable" UI of the decade, and iChat's glossy chat bubbles are the perfect stage for two AI agents negotiating live. **Modern engine, Aqua paint.** Nothing on screen may look modern, flat, or Material/Tailwind-default. If a surface looks like a 2020s web app, it's wrong.
 
-**Typography:** Tahoma / "MS Sans Serif" / Verdana stack. Small font sizes (11px body). Bold blue section labels.
+### 4.1 Why Mac, not Windows
+The 2000s Mac equivalent of AIM is **iChat** (2002). Its signature glossy speech bubbles are ideal for showing an agent-to-agent negotiation, and Aqua's candy gloss reads as "premium retro" on a projector. Commit fully to this look.
 
-**Buttons:** glossy, rounded, light-blue gradient with a highlight sheen and a 1px inset border. Active state = pressed inset look.
+### 4.2 The desktop shell (build this first — it's the frame everything sits in)
+- **Menu bar** — a thin (~22px) translucent white bar pinned to the top of the screen. Left: an **original** menu glyph (a small stylized mark — do NOT use Apple's logo/trademark), then a **bold app-name menu** ("Agent Messenger"), then File / Edit / Buddies / View. Right side: a couple of status glyphs and a **live clock** ("Sun 9:41 PM"). Faint bottom hairline, subtle blur/translucency.
+- **Wallpaper** — generate an **original** flowing-ribbon / aqua-wave gradient in the spirit of the Tiger "Aurora" and "Aqua Blue" desktops (deep blue → teal → violet ribbons of light). Pure CSS gradients + blurred blobs. Do NOT ship Apple's actual wallpaper images.
+- **The Dock** — bottom-center, a semi-transparent rounded-rectangle shelf with a subtle reflective floor line. Large **glossy rounded-square icons** (original homages, not Apple's icons). **Magnification MUST work**: hovering scales the hovered icon up with neighbors scaling progressively less (the fisheye effect) — this is a signature Aqua moment and judges will hover it. A small indicator dot/triangle sits under a "running" app. Include a light reflection of each icon on the shelf floor.
 
-**Color:** XP Luna blue (#0A2472 → #2A6FDB gradients), silver window chrome, that specific AIM buddy-list off-white.
+### 4.3 Aqua design language & quality bar (this is what separates "good" from "flat")
+The look is **gloss achieved by layering**, never a single flat fill. For every glossy element (buttons, bubbles, traffic lights, Dock icons) layer these four things:
+1. a **base gradient** (lighter top → darker bottom),
+2. a **top-half white sheen** overlay (`linear-gradient(rgba(255,255,255,.75) → transparent)` on the upper ~50%) — this is the "gel" highlight,
+3. a **1px inner light line** along the very top edge,
+4. a **soft inner shadow** along the bottom.
 
-**Windows to build (each is a draggable XP window):**
+Specifics:
+- **Traffic-light window controls**, top-**LEFT** of every window (Mac puts them left): three ~12px gel orbs — **close `#FF5F57`**, **minimize `#FEBC2E`**, **zoom `#28C840`** — each with a bright radial highlight in the upper-left. On window-hover, the ×, −, + glyphs fade in inside them.
+- **Aqua "gel" buttons** — pill/rounded-rect, glossy. The **default/primary button is Aqua blue and gently pulses/glows** (a slow breathing box-shadow) exactly like OS X's default button. Blue gradient ~`#A9CCF5 → #4A90E2 → #1C5FCB` with the white top sheen; secondary buttons are the same gloss in white/silver.
+- **Window chrome = brushed metal** (iChat, iTunes, and Safari used it in this era). Textured aluminium: base `#B8B8B8` with a faint vertical noise/texture and a `#D6D6D6 → #ABABAB` gradient. Title text centered, **Lucida Grande**, dark grey, with a 1px white text-shadow (embossed).
+- **Pinstripes** — the interior white panels of Aqua windows carry a *very* faint horizontal pinstripe (a `repeating-linear-gradient` of ~2px bands, ~2–3% darker). Subtle — texture, not stripes you consciously notice.
+- **Window shadows are dramatic** — big soft drop shadow, e.g. `0 22px 70px rgba(0,0,0,.45)`, so windows float off the desktop.
+- **Rounded corners** — windows ~8px top corners; buttons/fields fully rounded; bubbles ~14px.
+- **Aqua scrollbars** — glossy blue gel thumb on a pinstriped track (cosmetic is fine; don't over-invest).
 
-1. **Sign-On window** — AOL/AIM style. "Screen Name" dropdown, a Sign On button, a "Setup" link, dial-up-era footer text. Signing on plays the classic "door open" sound.
-2. **Buddy List window** — the iconic tall narrow window. Header with the agent's own screen name + status. A "Buddies" group and an "Offline" group. Each buddy row: presence dot (green online / yellow idle / red away), screen name, a tiny verified badge (✓) if the handshake passed, and the buddy's warning-level % in muted text. Right-click a buddy → context menu with **"Send IM," "Warn," "Get Info," "Verify Identity."** Buttons along the bottom: IM, Chat, Setup.
-3. **IM Chat window** — title bar = buddy's screen name. Scrolling message pane (each line: `ScreenName (timestamp): message`, colored by sender, exactly like AIM). A formatting toolbar (B/I/U, font, smiley — cosmetic is fine). Text input + **Send** button. When two LLM agents negotiate, their messages stream into this pane live.
-4. **Verify Identity modal** — the money shot. When adding/verifying a buddy, show the handshake step-by-step with a little progress feel: "Issuing challenge…" → "Nonce sent: `a3f9…`" → "Awaiting signature…" → "Signature received." → "**✓ Identity Verified — screen name is cryptographically bound to key `ED25519:…`**" (or "✗ Verification failed" on bad sig). This must reflect the *real* backend handshake, not a fake animation.
-5. **Warning meter** — AIM-style warning % bar next to a buddy / on the profile. Fills red as warning level rises. When someone clicks "Warn," it visibly ticks up.
-6. **Away-message editor** — set status (Available / Away / Busy) and a text away message shown to buddies.
+**Typography:** `"Lucida Grande", "Lucida Sans Unicode", "Helvetica Neue", sans-serif`. Body ~12px, anti-aliased. Titles slightly embossed (white text-shadow). Never use a modern geometric sans.
 
-**Sound effects** (big authenticity + demo delight — include if time allows, behind a mute toggle): door-open on sign-on, door-close on sign-off, the "buddy in" chime, the AIM message "ding," and the ICQ "uh-oh" for a warning. Generate/source royalty-free equivalents; do not ship copyrighted sound files.
+**Color tokens** (define as CSS variables): aqua-blue `#3875D7` (selection/highlight), gel-blue gradient stops as above, metal `#B8B8B8`, panel `#ECECEC`, pinstripe line `rgba(0,0,0,.03)`, text `#1a1a1a`, secondary text `#6a6a6a`, online `#28C840`, away `#FEBC2E`, busy/blocked `#FF5F57`.
+
+### 4.4 Windows to build (each is a **draggable** brushed-metal Aqua window)
+
+1. **Sign-In window** — small brushed-metal window, centered. An **original** app badge/avatar, a "Screen Name" popup and a glossy blue **"Log In"** default button that pulses. A gentle "connecting…" state. Signing on plays a soft original chime and drops the buddy list in.
+2. **Buddy List window (iChat-style)** — brushed metal, tall and narrow. **Top:** your own row — a rounded-square **buddy picture** thumbnail, your screen name, and a **status popup** (Available ▸ Away ▸ Busy) with the away-message text under it. A **search field** below. **Then grouped buddies** ("Buddies", "Offline"). Each buddy row = **buddy-pic thumbnail** + name + status line + a **colored status dot** (green/yellow/red) + a small **glossy "✓ Verified" seal on the pic** once the handshake passes + the buddy's **warning %** in muted text. Ctrl-click a row (Mac had no right-click) **or** use the **Buddies menu** → **"Send Message," "Verify Identity," "Get Info," "Warn."** Bottom toolbar: rounded gel buttons (message / info / +).
+3. **Chat window (THE STAR — iChat glossy bubbles)** — brushed-metal window titled with the buddy's name. Message area shows **glossy speech bubbles**: **your** agent's messages on the **right** in a glossy blue gel bubble (white text), **their** messages on the **left** in a glossy light-grey gel bubble (dark text). Each bubble has a **little tail** pointing to that sender's **buddy-pic thumbnail** sitting beside it. Bubbles use the four-layer gloss recipe. Bottom: a **rounded pill input** with the buddy pic beside it and a gel Send button. When the two LLM agents negotiate, their bubbles **stream in one at a time** with a brief "typing…" shimmer between turns so it reads like a live conversation. This window is what wins the demo — make the bubbles genuinely lickable.
+4. **Verify Identity — as an Aqua "sheet"** (very Mac: a modal that **slides down from under the window's title bar**, attached to the chat/buddy window, dimming the window behind it). Show the REAL handshake step-by-step: "Issuing challenge…" → "Nonce: `a3f9…`" → "Awaiting signature…" → "Signature received" → "**✓ Identity Verified — screen name cryptographically bound to `ED25519:…`**", or a red "✗ Verification failed" if the signature is bad. Must reflect the actual backend result, not a canned animation. Include the **"simulate imposter"** path here (signs with the wrong key → fails) — this is the trust money-shot.
+5. **Get Info panel** — small Aqua inspector for a buddy: buddy pic, key fingerprint, verified status, and the **warning-level meter** (a glossy gel progress bar that fills toward red as level rises; it visibly ticks up when "Warn" is used). A **"Warn"** gel button lives here too.
+6. **Status menu / away message** — the status popup (Available / Away / Busy) with an editable custom away message, shown under buddies who set it.
+
+### 4.5 Sounds (big authenticity + demo delight — behind a mute toggle)
+Original, royalty-free equivalents of: a soft **login chime** on sign-on, a **"buddy online"** blip when an agent comes up, the iChat-style **incoming-message "blip"** as each bubble lands, and a distinct **alert tone** when a warning fires. Do NOT ship Apple's actual system sounds (e.g. the startup chord) — use original clips.
+
+### 4.6 Copyright guardrails (this is a public submission — keep it clean)
+Everything Apple is an **homage, not a copy**: no Apple logo/trademark, no real Apple wallpapers, no Apple app icons, no Apple system sounds, no "Mac OS X"/"iChat" branding in the product name. Build original glossy assets in the *style* of Aqua. Name the product something original (default: **"Agent Messenger"**).
+
+### 4.7 Self-check — what "good looking" means before you call the frontend done
+- [ ] Windows float with big soft shadows and have **left-side traffic lights** that reveal glyphs on hover.
+- [ ] Every glossy element uses the **four-layer gloss** (not a flat fill); the default button **pulses** blue.
+- [ ] Window chrome reads as **brushed metal**; interior panels carry a **faint pinstripe**.
+- [ ] The **Dock magnifies** on hover with icon reflections; the **menu bar** clock is live.
+- [ ] Chat uses **iChat gel bubbles with tails + buddy pics**, left/right by sender, streaming in.
+- [ ] Font is **Lucida Grande**; nothing on screen looks like a modern flat web app.
+- [ ] Verify runs as a **sheet** sliding from the title bar and reflects the real handshake.
 
 ---
 
@@ -137,7 +169,7 @@ WarningReport
   subject        FK Agent
   reason         str
   weight         int, default 10
-  created_at     datetime
+  created_at
 ```
 
 ---
@@ -178,7 +210,7 @@ WarningReport
   1. Both agents must be *mutually verified* buddies (handshake passed). If not → 403 "identity not verified."
   2. Both must pass the reputation policy (§6.4). If blocked/limited → 403.
   Only then create a `Deal(negotiating)` and start the loop.
-- **Negotiation loop:** turn-based. Each turn, the acting agent gets: its persona + goal + hard limits + the transcript so far, and must output its next chat message. Messages are appended to `Deal.transcript` and **pushed over WS** so they stream into the chat window one at a time (add a small delay so it reads like live typing). Loop ends when an agent emits a deal-close token or after N turns (default 8). 
+- **Negotiation loop:** turn-based. Each turn, the acting agent gets: its persona + goal + hard limits + the transcript so far, and must output its next chat message. Messages are appended to `Deal.transcript` and **pushed over WS** so they stream into the chat window one at a time (add a small delay so it reads like live typing). Loop ends when an agent emits a deal-close token or after N turns (default 8).
 - **Structured close:** at the end, make one LLM call that extracts the agreed terms as strict JSON (`{price_per_1k, rate_limit, agreed: bool}`) — prompt it to return JSON only, parse safely, store in `Deal.terms`, set status `completed` (or `failed` if no agreement).
 - **Meaningful-AI hooks the judges reward:** the LLM is doing real work (autonomous negotiation + structured settlement), and the identity/reputation layer *governs* it. Optionally add a lightweight **watchdog**: an LLM check that flags if an agent tried to renege or break protocol → auto-files a `WarningReport` (AI-driven moderation). Build this only after the core loop works.
 
@@ -188,10 +220,10 @@ WarningReport
 
 This exact sequence is what gets shown to judges. Everything must fire live:
 
-1. **Two agents sign on** (Buyer + Seller). Door-open sound; presence dots go green in the buddy list.
+1. **Two agents sign on** (Buyer + Seller). Login chime + "buddy online" blip; status dots go green in the iChat buddy list, buddy pics appear.
 2. **Buyer adds Seller** → Verify Identity modal runs the real handshake → "✓ Identity Verified, key ED25519:…". Show that a *tampered* signature would fail (have a "simulate imposter" toggle that signs with the wrong key → "✗ Verification failed" — great for the demo).
 3. **IM window opens; the two LLM agents negotiate live** — messages stream in AIM style, they haggle price/rate, and close with agreed terms shown as a clean summary.
-4. **Moderation beat:** judge right-clicks an agent → "Warn" (or the watchdog auto-warns). Warning meter ticks up live. Push it past 80 → agent shows as blocked and a new `/deals/start` is refused with "agent blocked." 
+4. **Moderation beat:** judge Ctrl-clicks an agent (or uses the Buddies menu / Get Info) → "Warn" (or the watchdog auto-warns). Warning meter ticks up live. Push it past 80 → agent shows as blocked and a new `/deals/start` is refused with "agent blocked."
 5. One screen — buddy list + chat — has now shown **identity, trust, and moderation** for AI agents.
 
 Build a **`/seed` script + a "Run Demo" button** that sets up the two agents and can trigger the whole sequence, so nothing has to be typed live.
@@ -200,9 +232,9 @@ Build a **`/seed` script + a "Run Demo" button** that sets up the two agents and
 
 ## 8. BUILD ORDER (each phase must run & demo before the next)
 
-- **Phase 1 — Skeleton:** FastAPI app + SQLite + models + React app that renders the fake XP desktop, taskbar, and a draggable Sign-On + Buddy List window with mocked data. *Demo: it looks like Windows XP running AIM.*
+- **Phase 1 — Skeleton + the Aqua shell:** FastAPI app + SQLite + models + React app that renders the fake **Aqua desktop** (original wallpaper, top menu bar with live clock, magnifying Dock) plus draggable brushed-metal **Sign-In** and **iChat Buddy List** windows with mocked data. Nail the gloss here — this frame carries the whole look. *Demo: it convincingly looks like Mac OS X running iChat.*
 - **Phase 2 — Identity + handshake:** registration with Ed25519, the agent runner holding keypairs, `/handshake/*`, and the Verify Identity modal wired to the REAL verification. *Demo: add a buddy, watch it cryptographically verify; imposter fails.*
-- **Phase 3 — Live chat + presence:** WebSocket, IM window, presence dots, away messages. *Demo: real-time messages appear AIM-style.*
+- **Phase 3 — Live chat + presence:** WebSocket, the iChat chat window with **glossy gel bubbles**, status dots, away messages. *Demo: real-time messages stream in as iChat bubbles.*
 - **Phase 4 — AI negotiation (gated):** agent runner + Groq/Gemini + `/deals/start` with the handshake+reputation gate + streaming negotiation into the chat window + structured close. *Demo: two bots verify then haggle a deal live.*
 - **Phase 5 — Moderation:** warn button, warning meter, throttle/block policy, (optional) AI watchdog. *Demo: warn an agent, it gets blocked.*
 - **Phase 6 — Polish:** sounds, "Run Demo" button, seed script, imposter toggle, README, Dockerfile.
@@ -214,7 +246,7 @@ Build a **`/seed` script + a "Run Demo" button** that sets up the two agents and
 - No real money or blockchain. "Payments" is out of scope; this is identity+trust+moderation.
 - No multi-tenant infra, no k8s, no message queue beyond the in-memory/Redis interface.
 - No mobile responsiveness — it's a fake desktop, target desktop screen only.
-- No settings/preferences beyond what the demo shows. No dark mode (it's XP).
+- No settings/preferences beyond what the demo shows. No dark mode (it's Aqua).
 - Don't over-engineer the crypto (Ed25519 sign/verify is enough — no PKI, no cert chains, no revocation).
 
 ---
@@ -244,8 +276,8 @@ agent-im/
     .env.example
   frontend/
     src/
-      xp/                # XP primitives: Window, TitleBar, Button, Taskbar, Desktop
-      windows/           # SignOn, BuddyList, ChatWindow, VerifyModal, WarningMeter, AwayMsg
+      aqua/              # Aqua primitives: Window(brushed-metal), TrafficLights, GelButton, Dock, MenuBar, Sheet, Pinstripe
+      windows/           # SignIn, BuddyList(iChat), ChatWindow(bubbles), VerifySheet, GetInfo, StatusMenu
       lib/               # api client, ws client, sounds
       App.jsx
     index.html
@@ -277,13 +309,13 @@ README must include: `pip install -r requirements.txt`, `uvicorn app.main:app --
 - The demo flow in §7 works end-to-end and is triggerable from a "Run Demo" button.
 - Handshake verification is **real** (imposter signature genuinely fails).
 - Two LLM agents genuinely negotiate and produce structured terms, and the negotiation is **actually blocked** if identity isn't verified or warning level is too high.
-- The entire UI is convincingly early-2000s Windows XP / AIM. A judge should smile in the first three seconds.
+- The entire UI is convincingly early-2000s **Mac OS X Aqua / iChat** — glossy gel buttons, brushed-metal windows, left-side traffic lights, a **working magnifying Dock**, a live menu-bar clock, and **iChat gel chat bubbles**. A judge should smile in the first three seconds.
 - Dockerfile builds; deployable to Cloud Run.
 
 ---
 
 ### Ownership split (for reference)
 - **Avi:** crypto/identity (`crypto.py`, `handshake.py`), agent runner + LLM negotiation + gating (`agents/`, `negotiation.py`), reputation policy.
-- **Hardik:** entire XP-skinned frontend, WebSocket client, sounds, taskbar/desktop, deploy (Dockerfile + Cloud Run).
+- **Hardik:** entire Aqua-skinned frontend (Dock + magnification, menu bar, brushed-metal windows, iChat gel bubbles, traffic lights, sheets), WebSocket client, sounds, deploy (Dockerfile + Cloud Run).
 
 Build Phase 1 now and stop for a look before Phase 2.

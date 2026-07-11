@@ -1,6 +1,6 @@
 """
 BuddyNet Messenger — FastAPI entry point.
-Phase 1: skeleton with CORS, DB init, and placeholder routes.
+Wires all routers: registry, handshake, buddies, presence, reputation, negotiation, seed.
 """
 
 import os
@@ -15,6 +15,15 @@ load_dotenv()
 # Import DB init + models so tables are registered
 from app.db import init_db
 import app.models  # noqa: F401
+
+# Import routers
+from app.registry import router as registry_router
+from app.handshake import router as handshake_router
+from app.buddies import router as buddies_router
+from app.presence import router as presence_router
+from app.reputation import router as reputation_router
+from app.negotiation import router as negotiation_router
+from app.seed import router as seed_router
 
 
 # ---------------------------------------------------------------------------
@@ -33,7 +42,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="BuddyNet Messenger",
-    description="AIM-style trust infrastructure for AI agents",
+    description="AIM-style trust infrastructure for AI agents — identity, trust, and moderation",
     version="0.1.0",
     lifespan=lifespan,
 )
@@ -41,7 +50,12 @@ app = FastAPI(
 # CORS — allow the Vite dev server
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://localhost:5174",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:5174",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -49,20 +63,30 @@ app.add_middleware(
 
 
 # ---------------------------------------------------------------------------
-# Health / placeholder routes
+# Wire routers
+# ---------------------------------------------------------------------------
+
+app.include_router(registry_router)
+app.include_router(handshake_router)
+app.include_router(buddies_router)
+app.include_router(presence_router)
+app.include_router(reputation_router)
+app.include_router(negotiation_router)
+app.include_router(seed_router)
+
+
+# ---------------------------------------------------------------------------
+# Root health check
 # ---------------------------------------------------------------------------
 
 @app.get("/")
 async def root():
-    return {"service": "BuddyNet Messenger", "status": "ok"}
-
-
-@app.get("/agents")
-async def list_agents():
-    """Placeholder — will be replaced by registry module in Phase 2."""
-    return {"agents": []}
-
-
-@app.get("/agents/{screen_name}")
-async def get_agent(screen_name: str):
-    return {"error": "not implemented yet"}
+    return {
+        "service": "BuddyNet Messenger",
+        "status": "ok",
+        "endpoints": [
+            "/agents", "/handshake", "/buddies",
+            "/presence", "/moderation", "/deals",
+            "/seed", "/demo/verify", "/demo/run",
+        ],
+    }
